@@ -1,26 +1,43 @@
-local cloneref = (cloneref or clonereference or function(instance: any)
-    return instance
-end)
-local CoreGui: CoreGui = cloneref(game:GetService("CoreGui"))
-local Players: Players = cloneref(game:GetService("Players"))
-local RunService: RunService = cloneref(game:GetService("RunService"))
-local SoundService: SoundService = cloneref(game:GetService("SoundService"))
-local UserInputService: UserInputService = cloneref(game:GetService("UserInputService"))
-local TextService: TextService = cloneref(game:GetService("TextService"))
-local Teams: Teams = cloneref(game:GetService("Teams"))
-local TweenService: TweenService = cloneref(game:GetService("TweenService"))
+local clonerefFunction = cloneref or clone_ref or clonereference or clone_reference
+local nscloneref = function(Object: Instance)
+	if not clonerefFunction then
+		return Object
+	end
 
-local getgenv = getgenv or function()
+	local Success, Result = pcall(clonerefFunction, Object)
+	return Success and Result or Object
+end
+
+local CoreGui: CoreGui = nscloneref(game:GetService("CoreGui"))
+local Players: Players = nscloneref(game:GetService("Players"))
+local RunService: RunService = nscloneref(game:GetService("RunService"))
+local SoundService: SoundService = nscloneref(game:GetService("SoundService"))
+local UserInputService: UserInputService = nscloneref(game:GetService("UserInputService"))
+local TextService: TextService = nscloneref(game:GetService("TextService"))
+local Teams: Teams = nscloneref(game:GetService("Teams"))
+local TweenService: TweenService = nscloneref(game:GetService("TweenService"))
+
+local getgenv = getgenv or get_genv or function()
     return shared
 end
-local setclipboard = setclipboard or nil
-local protectgui = protectgui or (syn and syn.protect_gui) or function() end
-local gethui = gethui or function()
+local setclipboard = setclipboard or set_clipboard or writeclipboard or write_clipboard
+local protectgui = protectgui or protect_gui or (syn and syn.protect_gui) or function() end
+local gethui = gethui or get_hui or gethiddenui or get_hidden_ui or function()
     return CoreGui
 end
 
+local getcustomassetFunction = getcustomasset or get_custom_asset
+local function nsgetcustomasset(File)
+	local Success, Result = pcall(getcustomassetFunction, File)
+	return Success and Result or ""
+end
+
+local function Create(Type)
+	return nscloneref(Instance.new(Type))
+end
+
 local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
-local Mouse = cloneref(LocalPlayer:GetMouse())
+local Mouse = nscloneref(LocalPlayer:GetMouse())
 
 local Labels = {}
 local Buttons = {}
@@ -106,8 +123,8 @@ do
 
         local AssetID = string.format("rbxassetid://%s", AssetData.RobloxId)
 
-        if getcustomasset then
-            local Success, NewID = pcall(getcustomasset, AssetData.Path)
+        if getcustomassetFunction then
+            local Success, NewID = pcall(nsgetcustomasset, AssetData.Path)
 
             if Success and NewID then
                 AssetID = NewID
@@ -119,7 +136,7 @@ do
     end
 
     function CustomImageManager.DownloadAsset(AssetName: string, ForceRedownload: boolean?)
-        if not getcustomasset or not writefile or not isfile then
+        if not getcustomassetFunction or not writefile or not isfile then
             return false, "missing functions"
         end
 
@@ -167,7 +184,7 @@ local Library = {
 
     Notifications = {},
 
-    ToggleKeybind = Enum.KeyCode.RightControl,
+    ToggleKeybind = Enum.KeyCode.RightShift,
     TweenInfo = TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
     NotifyTweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
 
@@ -180,7 +197,6 @@ local Library = {
     Options = Options,
 
     NotifySide = "Right",
-    ShowCustomCursor = true,
     ForceCheckbox = false,
     ShowToggleFrameInKeybinds = true,
     NotifyOnError = false,
@@ -291,11 +307,9 @@ local Templates = {
         GlobalSearch = false,
         CornerRadius = 4,
         NotifySide = "Right",
-        ShowCustomCursor = true,
         Font = Enum.Font.Code,
-        ToggleKeybind = Enum.KeyCode.RightControl,
+        ToggleKeybind = Enum.KeyCode.RightShift,
         MobileButtonsSide = "Left",
-        UnlockMouseWhileOpen = true,
 
         EnableSidebarResize = false,
         EnableCompacting = true,
@@ -468,7 +482,7 @@ end
 
 --// Basic Functions \\--
 local function WaitForEvent(Event, Timeout, Condition)
-    local Bindable = Instance.new("BindableEvent")
+    local Bindable = Create("BindableEvent")
     local Connection = Event:Once(function(...)
         if not Condition or typeof(Condition) == "function" and Condition(...) then
             Bindable:Fire(true)
@@ -1062,7 +1076,7 @@ local function FillInstance(Table: { [string]: any }, Instance: GuiObject)
 end
 
 local function New(ClassName: string, Properties: { [string]: any }): any
-    local Instance = Instance.new(ClassName)
+    local Instance = Create(ClassName)
 
     if Templates[ClassName] then
         FillInstance(Templates[ClassName], Instance)
@@ -1131,53 +1145,6 @@ local ModalElement = New("TextButton", {
     Parent = ScreenGui,
 })
 
---// Cursor
-local Cursor, CursorCustomImage
-do
-    Cursor = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = "WhiteColor",
-        Size = UDim2.fromOffset(9, 1),
-        Visible = false,
-        ZIndex = 999,
-        Parent = ScreenGui,
-    })
-    New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = "DarkColor",
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.new(1, 2, 1, 2),
-        ZIndex = 998,
-        Parent = Cursor,
-    })
-
-    local CursorV = New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = "WhiteColor",
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(1, 9),
-        Parent = Cursor,
-    })
-    New("Frame", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = "DarkColor",
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.new(1, 2, 1, 2),
-        ZIndex = 998,
-        Parent = CursorV,
-    })
-
-    CursorCustomImage = New("ImageLabel", {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundTransparency = 1,
-        Position = UDim2.fromScale(0.5, 0.5),
-        Size = UDim2.fromOffset(20, 20),
-        ZIndex = 1000,
-        Visible = false,
-        Parent = Cursor
-    })
-end
-
 --// Notification
 local NotificationArea
 local NotificationList
@@ -1204,31 +1171,6 @@ do
 end
 
 --// Lib Functions \\--
-function Library:ResetCursorIcon()
-    CursorCustomImage.Visible = false
-    CursorCustomImage.Size = UDim2.fromOffset(20, 20)
-end
-
-function Library:ChangeCursorIcon(ImageId: string)
-    if not ImageId or ImageId == "" then
-        Library:ResetCursorIcon()
-        return
-    end
-
-    local Icon = Library:GetCustomIcon(ImageId)
-    assert(Icon, "Image must be a valid Roblox asset or a valid URL or a valid lucide icon.")
-
-    CursorCustomImage.Visible = true
-    CursorCustomImage.Image = Icon.Url
-    CursorCustomImage.ImageRectOffset = Icon.ImageRectOffset
-    CursorCustomImage.ImageRectSize = Icon.ImageRectSize
-end
-
-function Library:ChangeCursorIconSize(Size: UDim2)
-    assert(typeof(Size) == "UDim2", "UDim2 expected.")
-    CursorCustomImage.Size = Size
-end
-
 function Library:GetBetterColor(Color: Color3, Add: number): Color3
     Add = Add * (Library.IsLightTheme and -4 or 2)
     return Color3.fromRGB(
@@ -1257,7 +1199,7 @@ function Library:GetKeyString(KeyCode: Enum.KeyCode)
 end
 
 function Library:GetTextBounds(Text: string, Font: Font, Size: number, Width: number?): (number, number)
-    local Params = Instance.new("GetTextBoundsParams")
+    local Params = Create("GetTextBoundsParams")
     Params.Text = Text
     Params.RichText = true
     Params.Font = Font
@@ -1452,39 +1394,6 @@ function Library:AddBlank(Frame: GuiObject, Size: UDim2)
     })
 end
 
---// Deprecated \\--
-function Library:MakeOutline(Frame: GuiObject, Corner: number?, ZIndex: number?)
-    warn("Obsidian:MakeOutline is deprecated, please use Obsidian:AddOutline instead.")
-    local Holder = New("Frame", {
-        BackgroundColor3 = "DarkColor",
-        Position = UDim2.fromOffset(-2, -2),
-        Size = UDim2.new(1, 4, 1, 4),
-        ZIndex = ZIndex,
-        Parent = Frame,
-    })
-
-    local Outline = New("Frame", {
-        BackgroundColor3 = "OutlineColor",
-        Position = UDim2.fromOffset(1, 1),
-        Size = UDim2.new(1, -2, 1, -2),
-        ZIndex = ZIndex,
-        Parent = Holder,
-    })
-
-    if Corner and Corner > 0 then
-        New("UICorner", {
-            CornerRadius = UDim.new(0, Corner + 1),
-            Parent = Holder,
-        })
-        New("UICorner", {
-            CornerRadius = UDim.new(0, Corner),
-            Parent = Outline,
-        })
-    end
-
-    return Holder, Outline
-end
-
 function Library:AddDraggableLabel(Text: string)
     local Table = {}
 
@@ -1634,22 +1543,6 @@ function Library:AddDraggableMenu(Name: string)
 
     Library:MakeDraggable(Holder, Label, true)
     return Holder, Container
-end
-
---// Watermark - Deprecated \\--
-do
-    local WatermarkLabel = Library:AddDraggableLabel("")
-    WatermarkLabel:SetVisible(false)
-
-    function Library:SetWatermark(Text: string)
-        warn("Watermark is deprecated, please use Library:AddDraggableLabel instead.")
-        WatermarkLabel:SetText(Text)
-    end
-
-    function Library:SetWatermarkVisibility(Visible: boolean)
-        warn("Watermark is deprecated, please use Library:AddDraggableLabel instead.")
-        WatermarkLabel:SetVisible(Visible)
-    end
 end
 
 --// Context Menu \\--
@@ -1877,8 +1770,8 @@ function Library:AddTooltip(InfoStr: string, DisabledInfoStr: string, HoverInsta
             and not (CurrentMenu and Library:MouseIsOverFrame(CurrentMenu.Menu, Mouse))
         do
             TooltipLabel.Position = UDim2.fromOffset(
-                Mouse.X + (Library.ShowCustomCursor and 8 or 14),
-                Mouse.Y + (Library.ShowCustomCursor and 8 or 12)
+                Mouse.X + 14,
+                Mouse.Y + 12
             )
 
             RunService.RenderStepped:Wait()
@@ -3037,7 +2930,8 @@ do
 
         local Holder = New("Frame", {
             BackgroundTransparency = 1,
-            Size = UDim2.new(1, 0, 0, 6),
+            AutomaticSize = Enum.AutomaticSize.Y,
+            Size = UDim2.new(1, 0, 0, 0),
             Parent = Container,
         })
 
@@ -4811,7 +4705,7 @@ do
 
         local Viewport = {
             Object = ViewportObject,
-            Camera = if not Info.Camera then Instance.new("Camera") else Info.Camera,
+            Camera = if not Info.Camera then Create("Camera") else Info.Camera,
             Interactive = Info.Interactive,
             AutoFocus = Info.AutoFocus,
             Visible = Info.Visible,
@@ -5903,7 +5797,6 @@ function Library:CreateWindow(WindowInfo)
 
     Library.CornerRadius = WindowInfo.CornerRadius
     Library:SetNotifySide(WindowInfo.NotifySide)
-    Library.ShowCustomCursor = WindowInfo.ShowCustomCursor
     Library.Scheme.Font = WindowInfo.Font
     Library.ToggleKeybind = WindowInfo.ToggleKeybind
     Library.GlobalSearch = WindowInfo.GlobalSearch
@@ -7310,10 +7203,7 @@ function Library:CreateWindow(WindowInfo)
         end
 
         MainFrame.Visible = Library.Toggled
-
-        if WindowInfo.UnlockMouseWhileOpen then
-            ModalElement.Modal = Library.Toggled
-        end
+        ModalElement.Modal = Library.Toggled
 
         if Library.Toggled and not Library.IsMobile then
             local OldMouseIconEnabled = UserInputService.MouseIconEnabled
@@ -7321,14 +7211,10 @@ function Library:CreateWindow(WindowInfo)
                 RunService:UnbindFromRenderStep("ShowCursor")
             end)
             RunService:BindToRenderStep("ShowCursor", Enum.RenderPriority.Last.Value, function()
-                UserInputService.MouseIconEnabled = not Library.ShowCustomCursor
-
-                Cursor.Position = UDim2.fromOffset(Mouse.X, Mouse.Y)
-                Cursor.Visible = Library.ShowCustomCursor
+                UserInputService.MouseIconEnabled = true
 
                 if not (Library.Toggled and ScreenGui and ScreenGui.Parent) then
                     UserInputService.MouseIconEnabled = OldMouseIconEnabled
-                    Cursor.Visible = false
                     RunService:UnbindFromRenderStep("ShowCursor")
                 end
             end)
