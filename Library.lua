@@ -1,3 +1,13 @@
+local clonefunctionFunction = clonefunction or clone_function or copyfunction or copy_function
+local nsclonefunction = function(Function)
+	if not clonefunctionFunction then
+		return Function
+	end
+
+	local Success, Result = pcall(clonefunctionFunction, Function)
+	return Success and Result or Function
+end
+
 local clonerefFunction = cloneref or clone_ref or clonereference or clone_reference
 local nscloneref = function(Object: Instance)
 	if not clonerefFunction then
@@ -8,21 +18,26 @@ local nscloneref = function(Object: Instance)
 	return Success and Result or Object
 end
 
-local CoreGui: CoreGui = nscloneref(game:GetService("CoreGui"))
-local Players: Players = nscloneref(game:GetService("Players"))
-local RunService: RunService = nscloneref(game:GetService("RunService"))
-local SoundService: SoundService = nscloneref(game:GetService("SoundService"))
-local UserInputService: UserInputService = nscloneref(game:GetService("UserInputService"))
-local TextService: TextService = nscloneref(game:GetService("TextService"))
-local Teams: Teams = nscloneref(game:GetService("Teams"))
-local TweenService: TweenService = nscloneref(game:GetService("TweenService"))
+local GetServiceFunction = nsclonefunction(game.GetService)
+local function GetService(ServiceName)
+	return nscloneref(GetServiceFunction(game, ServiceName))
+end
+
+local CoreGui: CoreGui = GetService("CoreGui")
+local Players: Players = GetService("Players")
+local RunService: RunService = GetService("RunService")
+local SoundService: SoundService = GetService("SoundService")
+local UserInputService: UserInputService = GetService("UserInputService")
+local TextService: TextService = GetService("TextService")
+local Teams: Teams = GetService("Teams")
+local TweenService: TweenService = GetService("TweenService")
 
 local getgenv = getgenv or get_genv or function()
     return shared
 end
 local setclipboard = setclipboard or set_clipboard or writeclipboard or write_clipboard
 local protectgui = protectgui or protect_gui or (syn and syn.protect_gui) or function() end
-local gethui = gethui or get_hui or gethiddenui or get_hidden_ui or function()
+local gethui = gethui or get_hui or gethiddenui or get_hiddenui or get_hidden_ui or function()
     return CoreGui
 end
 
@@ -32,8 +47,9 @@ local function nsgetcustomasset(File)
 	return Success and Result or ""
 end
 
+local CreateInstance = nsclonefunction(Instance.new)
 local function Create(Type)
-	return nscloneref(Instance.new(Type))
+	return nscloneref(CreateInstance(Type))
 end
 
 local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
@@ -3960,6 +3976,10 @@ do
             end)
         else
             Box:GetPropertyChangedSignal("Text"):Connect(function()
+                if Box.Text == Input.Value then
+                    return
+                end
+
                 Input:SetValue(Box.Text)
             end)
         end
