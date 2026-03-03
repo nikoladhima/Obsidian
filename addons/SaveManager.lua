@@ -502,6 +502,7 @@ local SaveManager = {} do
 
         -- self:LoadAutoloadConfig()
         self:SetIgnoreIndexes({ "SaveManager_ConfigList", "SaveManager_ConfigName" })
+        return section
     end
 
     SaveManager:BuildFolderTree()
